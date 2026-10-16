@@ -1,16 +1,73 @@
-# React + Vite
+﻿# 생기부 프롬프트 도우미
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+교사가 수업·평가 정보와 학생별 관찰 메모를 입력하면 ChatGPT/Gemini에 붙여넣을 프롬프트를 조립하는 React/Vite 앱입니다. 사이트에서 AI를 호출하지 않으며 서버·DB에 입력 내용을 저장하지 않습니다. 생성한 프롬프트를 외부 AI에 전달하는 것은 교사가 직접 선택합니다.
 
-Currently, two official plugins are available:
+## 실행
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Node.js와 npm이 설치된 환경에서 실행합니다. Windows PowerShell에서 npm.ps1 실행이 차단되면 아래처럼 npm.cmd를 사용합니다.
 
-## React Compiler
+```powershell
+npm.cmd install
+npm.cmd run dev -- --host 127.0.0.1
+npm.cmd run build
+npm.cmd run lint
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 배포
 
-## Expanding the Oxlint configuration
+테스트 주소: https://meibinlee.github.io/student-record-helper/
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+공개 GitHub 저장소의 `main`에 푸시하면 `.github/workflows/deploy-pages.yml`에서 의존성 설치, 린트, 빌드를 거쳐 GitHub Pages로 배포합니다. 저장소 Settings → Pages의 Source는 GitHub Actions입니다. Vite의 `base`는 `/student-record-helper/`로 설정되어 있습니다.
+
+## 파일 구성
+
+- `src/App.jsx`: 홈/교과 세특 페이지 전환
+- `src/pages/HomePage.jsx`: 영역 선택 메뉴
+- `src/pages/SubjectPromptPage.jsx`: 입력 검증, 학생 추가·삭제, 식별 정보 선택, 생성·복사
+- `src/prompts/subjectPrompt.js`: `createSubjectPrompt()` named export, AI용 문자열 조립
+- `src/components/`: 헤더, 푸터, 섹션 제목, 결과 표시
+- `src/App.css`: 앱 스타일
+- `src/index.css`: 초기 Vite 템플릿 스타일이 남아 있어 후속 CSS 정리 시 함께 확인
+- `AGENTS.md`: 개발 제약과 우선순위에 대한 인수인계
+
+학교급·학년·단원은 UI에 유지하지만 프롬프트 함수에 전달하지 않습니다. 교사가 자유 입력란에 직접 적은 메타정보는 자동 삭제하지 않습니다. 수업 범위는 개별 학생이 특정 행동을 했다는 근거로 취급하지 않습니다.
+
+## 진행상황 — 2026-10-16
+
+기준 커밋은 `283bc0b`입니다. 교과 세특 프롬프트 생성 MVP가 구현되어 있으며 나머지 영역은 준비 중입니다.
+
+이번 변경은 프롬프트 품질 개선에 한정합니다.
+
+- 관찰 메모에서 부정적 평가를 먼저 제외하고, 완곡어·비교·양보·근거 없는 성장 서사로 되살리지 않도록 지시했습니다.
+- 긍정적 행동은 명시된 경우에만 활용하고, 참여 의향을 실제 참여나 과제 수행으로 확대하지 않도록 했습니다.
+- 목표 바이트의 90~100% 요구를 제거했습니다. 분량은 상한과 지향점이며, 근거가 적으면 짧게 마무리하도록 했습니다.
+- 중복 지시를 통합하고, 근거 부족 시 사실을 지어내지 않도록 했습니다.
+- 입력 원문, 함수 인자, import/export, UI는 유지했습니다. 부정적 메모 원문도 AI 입력에는 남으며, 본문 소재에서 제외하도록 지시하는 방식입니다.
+
+검증: 빌드·린트 통과. 실제 생성 함수의 샘플 문자열에서 입력 보존, 메타정보 미전달, 이전 분량 요구 제거, 선택 인자 전달, 누락 입력 방어를 확인했습니다. 동일 샘플 기준 프롬프트 길이는 3,754자에서 3,472자로 줄었습니다.
+
+현재 자동화 환경에는 연결된 브라우저가 없어 실제 클릭·복사는 검증하지 못했습니다. 외부 AI 호출은 하지 않았으며 AI 응답 품질은 아래 수동 확인이 필요합니다.
+
+## 브라우저와 외부 AI 수동 확인
+
+1. 새로고침 후 홈에서 교과 세특을 엽니다. 빈 입력으로 생성 버튼을 눌러 필수 항목 안내를 확인합니다.
+2. 교과명 `영어`, 단원명 `1단원 테스트단원`, 수업 내용 `인사말, be동사, 일반동사 기본`, 성취수준 `A`, 관찰 `소극적임, 대답 잘 안함, 열심히 수업에 참여하고자 함`, 목표 `1000B`를 입력합니다.
+3. 생성된 결과에서 수업 내용·성취수준·관찰 원문이 정확하고, 입력한 학교급·학년·단원명이 데이터 항목으로 포함되지 않는지 확인합니다. 학년·단원 사용을 금지하는 일반 규칙은 포함됩니다.
+4. 복사 버튼으로 복사한 문자열이 결과 창과 같은지 확인합니다. 학생 추가·삭제, 식별 정보 없음/학번/학번+이름과 목표 바이트 빠른 선택도 확인합니다. 식별 정보 없음으로 바꾸면 기존에 입력한 학번·이름이 새 프롬프트에서 빠져야 합니다.
+5. 복사한 프롬프트를 본인의 AI 서비스에 붙여넣습니다. 대답 방식이나 소극성을 완곡하게 되살리지 않는지, 참여 의향을 실제 행동으로 확대하지 않는지, 동일 학습 내용을 분량 때문에 반복하지 않는지 확인합니다.
+6. 관찰을 `소극적임, 대답 잘 안함`으로 바꾸면 태도 서술이 생략되는지 확인합니다. `조건문을 어려워하지만 필요한 부분을 질문하며 해결함`은 수업 범위도 조건문으로 맞춘 뒤 질문·해결 사실만 남는지 확인합니다. 관찰이 비어 있어도 행동을 만들지 않아야 합니다.
+7. 학생별 본문은 한 문단·명사형 종결이어야 하며, 예상 바이트 수가 없어야 합니다. 마지막 교사 확인 안내는 한 번만 있어야 합니다.
+
+모델별 결과 차이가 있으므로 최종 문장과 관찰 사실의 일치, 기재 가능 여부 및 실제 바이트는 교사가 확인합니다.
+
+## 다음 단계
+
+AGENTS.md에 따라 한 기능씩 구현·검증합니다.
+
+1. 공통 CSS와 모바일 사용성 정리
+2. Excel/Google Sheets 셀 범위 붙여넣기와 미리보기·검증
+3. 교체 가능한 교육과정별 성취기준 데이터와 교사 선택 기능 — 공식 원문 출처 확인 필요
+4. 브라우저 NEIS 바이트 계산기
+5. 행동특성·동아리·창의적 체험활동 페이지
+
+서버·DB·AI API, 불필요한 라이브러리와 라우터를 추가하지 않습니다. 사용자 확인 전 커밋·푸시하지 않습니다.
